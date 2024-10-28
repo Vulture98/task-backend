@@ -144,7 +144,7 @@ const loginUser = asyncHandler(async (req, res) => {
     return res.status(401).json({ message: "Invalid email or password" });
   }
   const token = generateToken(res, existingUser._id);
-  console.log(`"res.cookie":`, res.cookie);
+  console.log(`"res.cookie-token":`, token);
 
   // res.status(201).json({
   //   _id: existingUser._id,
