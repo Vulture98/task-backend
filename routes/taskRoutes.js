@@ -1,22 +1,25 @@
 import express from "express";
-import {getAllTasks, createTask, deleteTask, updateTask} from '../controllers/taskController.js'
+import {
+  getAllTasks,
+  createTask,
+  deleteTask,
+  updateTask,
+} from "../controllers/taskController.js";
 import { authenticate, authorizeAdmin } from "../middlewares/authMiddleware.js";
 
 const routerTask = express.Router();
 
 // admin stuff
 routerTask
-  .route("/")  
+  .route("/")
   .get(authenticate, getAllTasks)
+  .post(authenticate, createTask);
 
-routerTask.route('/:id').get(authenticate, getAllTasks)
+routerTask.route("/:id").put(authenticate, updateTask); // You may implement updateTask later
 
-// user stuff
-// routerTask
-//   .route("/profile")  
+routerTask
+  .route("/:id") // This route will handle deleting a task
+  .delete(authenticate, deleteTask); // Add authentication  
 
-// admin routes
-// routerTask
-//   .route("/:id")  
 
 export default routerTask;

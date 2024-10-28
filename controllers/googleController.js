@@ -1,26 +1,73 @@
+import User from "../models/userModels.js";
+import asyncHandler from "../middlewares/asyncHandler.js";
+import generateToken from "../utils/createToken.js";
+import dotenv from 'dotenv'
+import { OAuth2Client } from "google-auth-library";
 
+const getGoogleUser = asyncHandler(async (req, res) => {
+  dotenv.config()
 
-
-app.post('/auth/google', async (req, res) => {
   const { token } = req.body;
 
+  const CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+  const client = new OAuth2Client(CLIENT_ID);
+
   try {
-      const ticket = await client.verifyIdToken({
-          idToken: token,
-          audience: 'YOUR_GOOGLE_CLIENT_ID',
-      });
-      const payload = ticket.getPayload();
-      const userId = payload['sub']; // User's Google ID
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+    const googleId = payload["sub"];
+    const username = payload["name"];
+    const email = payload["email"];
 
-      // Handle user creation or login here
-
-      res.status(200).json({
-          success: true,
-          message: 'User authenticated',
-          userId,
+    // Check for existing user
+    let user = await User.findOne({ googleId });
+    console.log(`Hello from post /auth/google `);
+    if (!user) {
+      // Create a new user if not found
+      user = await User.create({
+        googleId,
+        username,
+        email,
+        password: "checking",
+        isGoogle: true,
       });
+      console.log(
+        `New User created - email: ${user.email} username: ${user.username}`
+      );
+
+      console.log("Response Headers:", res.getHeaders());
+      console.log("Cookies:", res.getHeader("Set-Cookie"));
+
+      const jwtToken = generateToken(res, user._id);
+      return res.status(200).json({
+        success: true,
+        userId: user.googleId,
+        name: user.username,
+        email: user.email,
+        message: "User Created",
+      });
+    }
+
+    const jwtToken = generateToken(res, user._id);
+    console.log("Response Headers:", res.getHeaders());
+    console.log("Cookies:", res.getHeader("Set-Cookie"));
+    console.log(
+      `Existing User email: ${user.email} username: ${user.username}`
+    );
+    return res.status(200).json({
+      success: true,
+      userId: user.googleId,
+      name: user.username,
+      email: user.email,
+      message: "Existing User",
+    });
   } catch (error) {
-      console.error('Error verifying token:', error);
-      res.status(401).json({ success: false, message: 'Invalid token' });
+    console.error("Error verifying token:", error);
+    return res.status(401).json({ success: false, message: "Invalid token" });
   }
 });
+
+export default getGoogleUser;
