@@ -9,7 +9,7 @@ import cors from "cors";
 import generateToken from "./utils/createToken.js";
 import router from "./routes/userRoutes.js";
 import routerTask from "./routes/taskRoutes.js";
-import routerGoogle from "./routes/googleRoutes.js";
+import routerGoogle from "./ignored/googleRoutes.js";
 import { OAuth2Client } from "google-auth-library";
 import User from './models/userModels.js'
 
