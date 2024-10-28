@@ -21,12 +21,5 @@ routerTask
   .route("/:id") // This route will handle deleting a task
   .delete(authenticate, deleteTask); // Add authentication  
 
-// user stuff
-// routerTask
-//   .route("/profile")
-
-// admin routes
-// routerTask
-//   .route("/:id")
 
 export default routerTask;
