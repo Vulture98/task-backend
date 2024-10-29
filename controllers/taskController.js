@@ -160,9 +160,30 @@ const updateIndex = asyncHandler(async (req, res) => {
     console.log(`inside sourceStatus !== status `);
     await Task.updateMany(
       { status: newStatus, index: { $gte: newIndex } },
-      { $inc: { index: 1 } } // Increment the index for tasks in the target column
+      { $inc: { index: 1 } } // Increment the index for tasks in target column
+    );
+    await Task.updateMany(
+      { status: sourceStatus, index: { $gt: oldIndex } },
+      { $inc: { index: -1 } } // Increment the index for tasks in src column
     );
     await Task.updateOne({ _id: id }, { status: newStatus, index: newIndex });
+  } else {
+    if (oldIndex > newIndex) {
+      console.log(`sourceStatus == newStatus MOVING UP if ===  ===  ===  === `);
+      await Task.updateMany(
+        { status: newStatus, index: { $gte: newIndex, $lt: oldIndex } },
+        { $inc: { index: 1 } } // Increment the index for tasks in the target column
+      );
+      await Task.updateOne({ _id: id }, { status: newStatus, index: newIndex });
+    } else {
+      //new > old
+      console.log(`sourceStatus == newStatus else MOVING DOWN else  ===  ===`);
+      await Task.updateMany(
+        { status: newStatus, index: { $gt: oldIndex, $lte: newIndex } },
+        { $inc: { index: -1 } } // Increment the index for tasks in the target column
+      );
+      await Task.updateOne({ _id: id }, { status: newStatus, index: newIndex });
+    }
   }
 
   // after index reorder
