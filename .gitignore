@@ -31,3 +31,6 @@ ignored
 
 #other files
 dragndrop.js
+
+# tests folder
+tests/

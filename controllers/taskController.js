@@ -2,6 +2,8 @@ import express from "express";
 import Task from "../models/taskModel.js";
 import asyncHandler from "../middlewares/asyncHandler.js";
 import User from "../models/userModels.js";
+import formattedTasks from "../utils/formattedTasks.js";
+import deletedTask from "../temp/delete.js";
 
 /*
 const createTask = asyncHandler(async (req, res) => {
@@ -80,7 +82,7 @@ const getAllTasks = asyncHandler(async (req, res) => {
   }
 });
 
-const deleteTask = asyncHandler(async (req, res) => {
+const deleteTask0 = asyncHandler(async (req, res) => {
   console.log(`here in deleteTask() `);
   console.log(`task id to be deleted: ${req.params.id} `);
   console.log(`task name to be deleted: ${req.params.title} `);
@@ -94,6 +96,40 @@ const deleteTask = asyncHandler(async (req, res) => {
     }
 
     res.status(200).json({ message: "Task deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Error deleting task", error });
+  }
+});
+
+const deleteTask = asyncHandler(async (req, res) => {
+  // deletedTask(req, res);
+  console.log(`here in deletedTask() `);
+  const { id } = req.params; // Extract task ID from URL parameters
+
+  try {
+    const task = await Task.findById(id);
+    const index = task.index;
+    const userId = task.userId; // Get the user ID from the task
+
+    if (!task) {
+      return res.status(404).json({ message: "Task not found" });
+    }
+
+    const taskDeleted = await Task.findByIdAndDelete(id);
+    if (!taskDeleted) {
+      return res.status(404).json({ message: "Task cant be deleted" });
+    }
+    await Task.updateMany(
+      { userId: userId, index: { $gt: index } },
+      { $inc: { index: -1 } } // Decrement the index for tasks after the deleted one
+    );
+    const updatedTasks = await Task.find({ userId: userId });
+    console.log(`"user-all tasks after":`, formattedTasks(updatedTasks));
+
+    res
+      .status(200)
+      // .json({ message: "Task deleted successfully", tasks: updatedTasks });
+      .json({ message: "Task deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: "Error deleting task", error });
   }
@@ -134,12 +170,6 @@ const updateIndex = asyncHandler(async (req, res) => {
   const task = await Task.findById(id);
   const findUserId = task.userId;
   const tasks = await Task.find({ userId: findUserId }); // Fetch tasks only for the logged-in user
-  const formattedTasks = (tasks) =>
-    tasks.map((task) => ({
-      title: task.title,
-      status: task.status,
-      index: task.index,
-    }));
 
   console.log(`"task":`, task.title);
   console.log(
